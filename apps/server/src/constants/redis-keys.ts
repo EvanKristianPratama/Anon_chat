@@ -1,0 +1,15 @@
+export const RedisKeys = {
+  waitingQueue: "queue:waiting",
+  queueMembers: "queue:members",
+  activeRoomsSet: "rooms:active",
+  room: (roomId: string) => `room:${roomId}`,
+  userRoom: (userId: string) => `user:${userId}:room`,
+  roomLock: (roomId: string) => `lock:room:${roomId}`,
+  rateLimit: (ip: string, action: string, bucket: number) => `ratelimit:${ip}:${action}:${bucket}`,
+  alias: (userId: string) => `alias:${userId}`,
+  metricsOnlineUsers: "metrics:online_users",
+  metricsPeakOnlineUsers: "metrics:peak_online_users",
+  metricsActiveRooms: "metrics:active_rooms",
+  metricsSessionDurationSumSec: "metrics:session_duration_sum_sec",
+  metricsSessionCount: "metrics:session_count",
+} as const;

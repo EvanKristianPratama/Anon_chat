@@ -2,9 +2,8 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { ImagePlus, Send } from "lucide-react";
+import { ImagePlus, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 interface ChatInputProps {
     disabled: boolean;
@@ -27,16 +26,15 @@ export function ChatInput({ disabled, onSendText, onSendImage }: ChatInputProps)
         <form
             onSubmit={handleSubmit}
             className={cn(
-                "flex items-center gap-2 rounded-2xl border border-border/40 bg-card/30 p-1.5 backdrop-blur-sm transition-all duration-200",
-                !disabled && "focus-within:border-primary/40 focus-within:ring-1 focus-within:ring-primary/20"
+                "flex items-end gap-2 rounded-xl border border-border bg-card p-2 transition-colors",
+                !disabled && "focus-within:border-ring"
             )}
         >
-            <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={disabled}
-                className="relative h-9 w-9 shrink-0 rounded-xl text-muted-foreground hover:text-foreground"
+            <label
+                className={cn(
+                    "relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                    disabled && "pointer-events-none opacity-40"
+                )}
             >
                 <ImagePlus className="h-4 w-4" />
                 <input
@@ -50,30 +48,29 @@ export function ChatInput({ disabled, onSendText, onSendImage }: ChatInputProps)
                         e.target.value = "";
                     }}
                 />
-            </Button>
+            </label>
 
             <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={disabled ? "Connect first…" : "Type a message…"}
+                placeholder={disabled ? "Connect first..." : "Type a message..."}
                 maxLength={500}
                 disabled={disabled}
-                className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none disabled:cursor-not-allowed"
+                className="min-w-0 flex-1 bg-transparent px-1 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed"
             />
 
-            <Button
+            <button
                 type="submit"
-                size="icon"
                 disabled={disabled || !text.trim()}
                 className={cn(
-                    "h-9 w-9 shrink-0 rounded-xl transition-all duration-200",
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-all",
                     text.trim()
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                        : "bg-muted/40 text-muted-foreground"
+                        ? "bg-foreground text-background hover:opacity-80"
+                        : "text-muted-foreground opacity-40"
                 )}
             >
-                <Send className="h-4 w-4" />
-            </Button>
+                <ArrowUp className="h-4 w-4" />
+            </button>
         </form>
     );
 }

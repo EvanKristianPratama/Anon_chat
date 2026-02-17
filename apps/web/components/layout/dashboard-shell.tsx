@@ -1,80 +1,41 @@
+"use client";
+
+import { useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowRightLeft, Shield, Sparkles } from "lucide-react";
-import { SidebarNav, type SidebarItem } from "@/components/layout/sidebar-nav";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { Badge } from "@/components/ui/badge";
+import { Menu } from "lucide-react";
+import { SidebarNav } from "@/components/layout/sidebar-nav";
 
 interface DashboardShellProps {
-  mode: "user" | "admin";
-  title: string;
-  subtitle: string;
-  hideHeader?: boolean;
+  displayName: string;
   children: ReactNode;
 }
 
-const userItems: SidebarItem[] = [
-  {
-    href: "/",
-    label: "User Chat",
-    icon: ArrowRightLeft
-  },
-  {
-    href: "/admin",
-    label: "Admin Monitor",
-    icon: Shield
-  }
-];
+export function DashboardShell({ displayName, children }: DashboardShellProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-const adminItems: SidebarItem[] = [
-  {
-    href: "/admin",
-    label: "Admin Monitor",
-    icon: Shield
-  },
-  {
-    href: "/",
-    label: "User Chat",
-    icon: ArrowRightLeft
-  }
-];
-
-export function DashboardShell({
-  mode,
-  title,
-  subtitle,
-  hideHeader = false,
-  children
-}: DashboardShellProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden px-4 py-5 md:px-6 md:py-6">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-80px] top-[-60px] h-[320px] w-[320px] rounded-full bg-cyan-400/30 blur-3xl dark:bg-cyan-500/20" />
-        <div className="absolute bottom-[-120px] right-[-60px] h-[360px] w-[360px] rounded-full bg-blue-500/25 blur-3xl dark:bg-indigo-500/20" />
-      </div>
+    <div className="flex h-dvh w-full overflow-hidden">
+      <SidebarNav
+        displayName={displayName}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-      <div className="relative mx-auto grid w-full max-w-7xl gap-4 lg:grid-cols-[260px_1fr]">
-        <SidebarNav mode={mode} items={mode === "user" ? userItems : adminItems} />
-
-        <div className="glass-panel min-h-[85vh] rounded-2xl border p-4 md:p-6">
-          {hideHeader ? null : (
-            <header className="mb-5 flex flex-col gap-4 border-b border-border/60 pb-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">
-                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                    {mode === "user" ? "User Zone" : "Admin Zone"}
-                  </Badge>
-                </div>
-                <h1 className="font-title text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
-                <p className="font-mono text-xs text-muted-foreground md:text-sm">{subtitle}</p>
-              </div>
-
-              <ThemeToggle />
-            </header>
-          )}
-
-          {children}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Mobile top bar */}
+        <div className="flex items-center border-b border-border px-3 py-2 md:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="ml-2 text-sm font-medium">Anon Chat</span>
         </div>
+
+        <main className="flex flex-1 flex-col overflow-hidden">
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -11,27 +11,19 @@ export function ConnectionBadge({ connected, className }: ConnectionBadgeProps) 
     return (
         <div
             className={cn(
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-300",
+                "inline-flex items-center gap-1.5 text-[10px] font-medium",
                 connected
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                    : "border-red-500/30 bg-red-500/10 text-red-400",
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-muted-foreground",
                 className
             )}
         >
-            <span className="relative flex h-2 w-2">
-                <span
-                    className={cn(
-                        "absolute inline-flex h-full w-full rounded-full opacity-75",
-                        connected ? "animate-ping bg-emerald-400" : "bg-red-400"
-                    )}
-                />
-                <span
-                    className={cn(
-                        "relative inline-flex h-2 w-2 rounded-full",
-                        connected ? "bg-emerald-500" : "bg-red-500"
-                    )}
-                />
-            </span>
+            <span
+                className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    connected ? "bg-emerald-500" : "bg-neutral-400"
+                )}
+            />
             {connected ? "Online" : "Offline"}
         </div>
     );

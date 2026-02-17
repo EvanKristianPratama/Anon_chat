@@ -4,7 +4,6 @@ import { UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { QueueState } from "@/types/chat";
 import { ConnectionBadge } from "@/components/chat/connection-badge";
-import { Button } from "@/components/ui/button";
 
 interface ChatHeaderProps {
     displayName: string;
@@ -23,42 +22,41 @@ export function ChatHeader({
     queueState,
     onEditDisplayName,
 }: ChatHeaderProps) {
+    const subtitle =
+        queueState === "matched" && partnerId
+            ? `Chatting with ${partnerAlias || "stranger"}`
+            : queueState === "waiting"
+                ? "Finding someone..."
+                : "Ready to chat";
+
     return (
-        <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between border-b border-border px-3 py-2.5 md:px-4">
+            <div className="flex min-w-0 items-center gap-2.5">
                 <div className="relative">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-accent/20 text-sm font-bold uppercase text-primary">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-xs font-bold uppercase text-background">
                         {displayName ? displayName[0] : "?"}
                     </div>
                     <div
                         className={cn(
-                            "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background",
-                            connected ? "bg-emerald-500" : "bg-red-500"
+                            "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background",
+                            connected ? "bg-emerald-500" : "bg-neutral-400"
                         )}
                     />
                 </div>
                 <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">{displayName || "Anonymous"}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {queueState === "matched" && partnerId
-                            ? `Chatting with ${partnerAlias || "stranger"}`
-                            : queueState === "waiting"
-                                ? "Finding someone…"
-                                : "Ready to chat"}
-                    </p>
+                    <p className="truncate text-sm font-medium">{partnerAlias || "Stranger"}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{subtitle}</p>
                 </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
                 <ConnectionBadge connected={connected} />
-                <Button
-                    variant="ghost"
-                    size="icon"
+                <button
                     onClick={onEditDisplayName}
-                    className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
                     <UserCircle2 className="h-4 w-4" />
-                </Button>
+                </button>
             </div>
         </div>
     );

@@ -2,16 +2,14 @@
 
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { ChatContainer } from "@/components/chat/chat-container";
+import { useState } from "react";
 
 export function UserDashboard() {
+  const [displayName, setDisplayName] = useState("");
+
   return (
-    <DashboardShell
-      mode="user"
-      title="Anonymous Chat"
-      subtitle="Random match, anonymous messaging"
-      hideHeader
-    >
-      <ChatContainer />
+    <DashboardShell displayName={displayName}>
+      <ChatContainer displayName={displayName} setDisplayName={setDisplayName} />
     </DashboardShell>
   );
 }

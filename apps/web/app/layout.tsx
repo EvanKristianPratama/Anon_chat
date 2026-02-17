@@ -1,23 +1,23 @@
-import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 
-const titleFont = Space_Grotesk({
+const sansFont = Inter({
   subsets: ["latin"],
-  variable: "--font-title"
+  variable: "--font-sans"
 });
 
-const monoFont = IBM_Plex_Mono({
+const monoFont = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
   variable: "--font-mono"
 });
 
 export const metadata: Metadata = {
-  title: "Anonymous Chat Blueprint",
-  description: "KISS anonymous random chat with Redis + worker architecture"
+  title: "Anon Chat",
+  description: "Anonymous random chat"
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -25,9 +25,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${titleFont.variable} ${monoFont.variable}`}
+      className={`${sansFont.variable} ${monoFont.variable}`}
     >
-      <body suppressHydrationWarning className="font-title antialiased">
+      <body suppressHydrationWarning className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {children}
         </ThemeProvider>

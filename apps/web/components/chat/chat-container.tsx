@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatMessages } from "@/components/chat/chat-messages";
@@ -8,7 +9,12 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { ChatActions } from "@/components/chat/chat-actions";
 import { DisplayNameModal } from "@/components/chat/display-name-modal";
 
-export function ChatContainer() {
+interface ChatContainerProps {
+    displayName: string;
+    setDisplayName: Dispatch<SetStateAction<string>>;
+}
+
+export function ChatContainer({ displayName, setDisplayName }: ChatContainerProps) {
     const {
         connected,
         queueState,
@@ -21,7 +27,6 @@ export function ChatContainer() {
         sendImage,
     } = useChatSocket();
 
-    const [displayName, setDisplayName] = useState("");
     const [showDisplayNameModal, setShowDisplayNameModal] = useState(true);
 
     useEffect(() => {
@@ -34,7 +39,7 @@ export function ChatContainer() {
             setDisplayName(normalized);
             setShowDisplayNameModal(false);
         }
-    }, []);
+    }, [setDisplayName]);
 
     const canInteract = connected && !showDisplayNameModal && displayName.length > 0;
 
@@ -64,39 +69,37 @@ export function ChatContainer() {
     };
 
     return (
-        <>
-            <div className="flex h-[calc(100vh-6rem)] flex-col gap-3 md:h-[82vh]">
-                <ChatHeader
-                    displayName={displayName}
-                    partnerId={partnerId}
-                    partnerAlias={partnerAlias}
-                    connected={connected}
-                    queueState={queueState}
-                    onEditDisplayName={() => setShowDisplayNameModal(true)}
-                />
+        <div className="flex flex-1 flex-col overflow-hidden">
+            <ChatHeader
+                displayName={displayName}
+                partnerId={partnerId}
+                partnerAlias={partnerAlias}
+                connected={connected}
+                queueState={queueState}
+                onEditDisplayName={() => setShowDisplayNameModal(true)}
+            />
 
-                <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
-
+            <div className="min-h-0 flex-1 overflow-hidden">
                 <ChatMessages messages={messages} displayName={displayName} />
+            </div>
 
-                <div className="space-y-3">
-                    <ChatActions
-                        canInteract={canInteract}
-                        queueState={queueState}
-                        onNext={handleNext}
-                        onSkip={skip}
-                    />
-                    <ChatInput
-                        disabled={!canInteract}
-                        onSendText={handleSendText}
-                        onSendImage={handleSendImage}
-                    />
-                </div>
+            <div className="border-t border-border px-3 py-2 md:px-4 md:py-3">
+                <ChatActions
+                    canInteract={canInteract}
+                    queueState={queueState}
+                    onNext={handleNext}
+                    onSkip={skip}
+                />
+                <ChatInput
+                    disabled={!canInteract}
+                    onSendText={handleSendText}
+                    onSendImage={handleSendImage}
+                />
             </div>
 
             {showDisplayNameModal && (
                 <DisplayNameModal initialDisplayName={displayName} onSave={handleSaveDisplayName} />
             )}
-        </>
+        </div>
     );
 }

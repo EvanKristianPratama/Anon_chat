@@ -4,17 +4,14 @@ import { MessageCircle } from "lucide-react";
 
 export function ChatEmptyState() {
     return (
-        <div className="flex h-full flex-col items-center justify-center gap-4 py-16">
-            <div className="relative">
-                <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20 blur-2xl" />
-                <div className="relative rounded-2xl border border-border/40 bg-card/30 p-5 backdrop-blur-sm">
-                    <MessageCircle className="h-10 w-10 text-muted-foreground/60" strokeWidth={1.5} />
-                </div>
+        <div className="flex h-full flex-col items-center justify-center gap-3">
+            <div className="rounded-full border border-border p-4">
+                <MessageCircle className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
             </div>
-            <div className="space-y-1.5 text-center">
-                <p className="text-sm font-medium text-muted-foreground">No messages yet</p>
-                <p className="max-w-[240px] text-xs text-muted-foreground/70">
-                    Tap <span className="font-semibold text-primary">New Chat</span> to find a random stranger and start chatting anonymously.
+            <div className="space-y-1 text-center">
+                <p className="text-sm font-medium">No messages yet</p>
+                <p className="max-w-[220px] text-xs text-muted-foreground">
+                    Tap <span className="font-medium text-foreground">Next</span> to find a random partner.
                 </p>
             </div>
         </div>

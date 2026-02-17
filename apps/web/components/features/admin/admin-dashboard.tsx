@@ -82,13 +82,14 @@ export function AdminDashboard() {
   };
 
   return (
-    <DashboardShell
-      mode="admin"
-      title="Admin Monitoring"
-      subtitle="Observe online users, active rooms, and session health"
-    >
-      <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
-        <Card className="glass-panel border-border/70">
+    <DashboardShell displayName="Admin">
+      <div className="flex-1 overflow-auto p-4">
+        <div className="mb-4">
+          <h1 className="text-lg font-semibold">Admin Monitoring</h1>
+          <p className="text-xs text-muted-foreground">Observe online users, active rooms, and session health</p>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <SignalHigh className="h-5 w-5" />
@@ -144,6 +145,7 @@ export function AdminDashboard() {
           />
         </div>
       </div>
+      </div>
     </DashboardShell>
   );
 }
@@ -156,14 +158,14 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, icon }: MetricCardProps) {
   return (
-    <Card className="glass-panel border-border/70">
+    <Card>
       <CardHeader className="pb-2">
         <CardDescription className="font-mono text-xs">{title}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between">
-          <p className="font-title text-2xl font-semibold">{value}</p>
-          <div className="rounded-lg border border-border/60 bg-background/40 p-2">{icon}</div>
+          <p className="text-2xl font-semibold">{value}</p>
+          <div className="rounded-lg border border-border p-2">{icon}</div>
         </div>
       </CardContent>
     </Card>

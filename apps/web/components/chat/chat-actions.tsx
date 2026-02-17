@@ -2,8 +2,6 @@
 
 import { Shuffle, SkipForward, Loader2 } from "lucide-react";
 import type { QueueState } from "@/types/chat";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface ChatActionsProps {
     canInteract: boolean;
@@ -17,32 +15,28 @@ export function ChatActions({ canInteract, queueState, onNext, onSkip }: ChatAct
     const isMatched = queueState === "matched";
 
     return (
-        <div className="flex items-center gap-2">
-            <Button
+        <div className="mb-2 flex items-center gap-1.5">
+            <button
                 onClick={onNext}
                 disabled={!canInteract || isWaiting}
-                className={cn(
-                    "gap-2 rounded-xl px-5 transition-all duration-200",
-                    isWaiting && "animate-pulse"
-                )}
+                className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
                 {isWaiting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                    <Shuffle className="h-4 w-4" />
+                    <Shuffle className="h-3 w-3" />
                 )}
-                {isWaiting ? "Searching…" : "New Chat"}
-            </Button>
+                {isWaiting ? "Searching..." : "Next"}
+            </button>
 
-            <Button
-                variant="outline"
+            <button
                 onClick={onSkip}
                 disabled={!canInteract || !isMatched}
-                className="gap-2 rounded-xl border-border/40 px-5 text-muted-foreground transition-all duration-200 hover:border-destructive/40 hover:text-destructive"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
             >
-                <SkipForward className="h-4 w-4" />
+                <SkipForward className="h-3 w-3" />
                 Skip
-            </Button>
+            </button>
         </div>
     );
 }

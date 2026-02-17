@@ -3,14 +3,12 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { MessageCircle } from "lucide-react";
+import { normalizeDisplayName } from "@/lib/user-preferences";
 
 interface DisplayNameModalProps {
     initialDisplayName: string;
     onSave: (displayName: string) => void;
 }
-
-const normalizeDisplayName = (value: string): string =>
-    value.trim().replace(/\s+/g, " ").slice(0, 24);
 
 export function DisplayNameModal({ initialDisplayName, onSave }: DisplayNameModalProps) {
     const [inputValue, setInputValue] = useState(initialDisplayName);

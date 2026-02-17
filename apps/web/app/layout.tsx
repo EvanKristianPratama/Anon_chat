@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { AccentProvider } from "@/components/providers/accent-provider";
 
 const sansFont = Inter({
   subsets: ["latin"],
@@ -16,8 +17,13 @@ const monoFont = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Anon Chat",
-  description: "Anonymous random chat"
+  title: "Anotalk",
+  description: "Anonymous random chat",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png"
+  }
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -25,11 +31,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="en"
       suppressHydrationWarning
+      data-accent="mono"
       className={`${sansFont.variable} ${monoFont.variable}`}
     >
       <body suppressHydrationWarning className="font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          {children}
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <AccentProvider>{children}</AccentProvider>
         </ThemeProvider>
       </body>
     </html>

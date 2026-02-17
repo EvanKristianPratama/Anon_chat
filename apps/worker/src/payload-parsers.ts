@@ -6,6 +6,24 @@ import type {
   QueueJoinPayload
 } from "./types";
 
+const isQueueJoinAvatarPayload = (value: unknown): boolean => {
+  if (!isObjectRecord(value) || typeof value.type !== "string") {
+    return false;
+  }
+
+  if (value.type === "dicebear") {
+    const hasValidStyle = value.style === undefined || typeof value.style === "string";
+    const hasValidSeed = value.seed === undefined || typeof value.seed === "string";
+    return hasValidStyle && hasValidSeed;
+  }
+
+  if (value.type === "custom") {
+    return typeof value.mime === "string" && typeof value.data === "string";
+  }
+
+  return false;
+};
+
 export const parseQueueJoinPayload = (rawPayload: unknown): QueueJoinPayload | null => {
   if (!isObjectRecord(rawPayload)) {
     return null;
@@ -13,6 +31,12 @@ export const parseQueueJoinPayload = (rawPayload: unknown): QueueJoinPayload | n
 
   if ("alias" in rawPayload && typeof rawPayload.alias !== "string") {
     return null;
+  }
+
+  if ("avatar" in rawPayload && rawPayload.avatar !== undefined) {
+    if (!isQueueJoinAvatarPayload(rawPayload.avatar)) {
+      return null;
+    }
   }
 
   return rawPayload as QueueJoinPayload;

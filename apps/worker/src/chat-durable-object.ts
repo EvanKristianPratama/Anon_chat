@@ -6,7 +6,13 @@ import { InMemoryRateLimiter } from "./rate-limiter";
 import { AdminService } from "./services/admin-service";
 import { QueueService } from "./services/queue-service";
 import { RoomService } from "./services/room-service";
-import { base64ByteLength, normalizeAlias, sanitizeText } from "./utils";
+import {
+  base64ByteLength,
+  normalizeAlias,
+  normalizeAvatarPayload,
+  sanitizeText,
+  serializeAvatar
+} from "./utils";
 import { ALLOWED_IMAGE_MIME, type Env, type UserSession } from "./types";
 
 export class ChatDurableObject {
@@ -142,11 +148,43 @@ export class ChatDurableObject {
     }
 
     const payload = parseQueueJoinPayload(rawPayload);
+    if (!payload) {
+      emitSystemError(user.socket, "BAD_REQUEST", "Invalid queue payload.");
+      return;
+    }
+
     if (payload?.alias) {
       const alias = normalizeAlias(payload.alias);
       if (alias) {
         user.alias = alias;
       }
+    }
+
+    if (payload.avatar) {
+      const normalizedAvatar = normalizeAvatarPayload(
+        payload.avatar,
+        this.config.maxAvatarBytes,
+        user.alias ?? user.userId
+      );
+      if (!normalizedAvatar) {
+        emitSystemError(
+          user.socket,
+          "INVALID_AVATAR",
+          `Invalid avatar payload. Max ${this.config.maxAvatarBytes} bytes (jpeg/png/webp).`
+        );
+        return;
+      }
+      user.avatar = normalizedAvatar;
+    } else if (!user.avatar) {
+      user.avatar = normalizeAvatarPayload(
+        {
+          type: "dicebear",
+          style: "avataaars",
+          seed: user.alias ?? user.userId
+        },
+        this.config.maxAvatarBytes,
+        user.alias ?? user.userId
+      ) ?? undefined;
     }
 
     const matched = this.enqueueAndMatch(user);
@@ -257,13 +295,15 @@ export class ChatDurableObject {
       emit(match.first.socket, "room:matched", {
         roomId: match.room.roomId,
         partnerId: match.second.userId,
-        partnerAlias: match.second.alias
+        partnerAlias: match.second.alias,
+        partnerAvatar: serializeAvatar(match.second.avatar)
       });
 
       emit(match.second.socket, "room:matched", {
         roomId: match.room.roomId,
         partnerId: match.first.userId,
-        partnerAlias: match.first.alias
+        partnerAlias: match.first.alias,
+        partnerAvatar: serializeAvatar(match.first.avatar)
       });
     }
 

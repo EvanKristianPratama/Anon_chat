@@ -26,13 +26,13 @@ export function ChatInput({ disabled, onSendText, onSendImage }: ChatInputProps)
         <form
             onSubmit={handleSubmit}
             className={cn(
-                "flex items-end gap-2 rounded-xl border border-border bg-card p-2 transition-colors",
-                !disabled && "focus-within:border-ring"
+                "flex items-center gap-2 rounded-full border border-white/55 bg-white/55 px-2 py-1.5 shadow-[0_10px_30px_hsl(var(--foreground)/0.1)] backdrop-blur-xl transition-colors dark:border-white/10 dark:bg-white/5",
+                !disabled && "focus-within:border-ring/70"
             )}
         >
             <label
                 className={cn(
-                    "relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                    "relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/45 bg-white/60 text-muted-foreground transition-colors hover:text-foreground dark:border-white/10 dark:bg-white/5",
                     disabled && "pointer-events-none opacity-40"
                 )}
             >
@@ -56,16 +56,16 @@ export function ChatInput({ disabled, onSendText, onSendImage }: ChatInputProps)
                 placeholder={disabled ? "Connect first..." : "Type a message..."}
                 maxLength={500}
                 disabled={disabled}
-                className="min-w-0 flex-1 bg-transparent px-1 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed"
+                className="min-w-0 flex-1 bg-transparent px-1 py-1 text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none disabled:cursor-not-allowed"
             />
 
             <button
                 type="submit"
                 disabled={disabled || !text.trim()}
                 className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-all",
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
                     text.trim()
-                        ? "bg-foreground text-background hover:opacity-80"
+                        ? "bg-foreground text-background hover:opacity-85"
                         : "text-muted-foreground opacity-40"
                 )}
             >

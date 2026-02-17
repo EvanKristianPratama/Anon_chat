@@ -11,32 +11,30 @@ interface ChatActionsProps {
 }
 
 export function ChatActions({ canInteract, queueState, onNext, onSkip }: ChatActionsProps) {
+    const isIdle = queueState === "idle";
     const isWaiting = queueState === "waiting";
-    const isMatched = queueState === "matched";
 
     return (
         <div className="mb-2 flex items-center gap-1.5">
-            <button
-                onClick={onNext}
-                disabled={!canInteract || isWaiting}
-                className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
-            >
-                {isWaiting ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                    <Shuffle className="h-3 w-3" />
-                )}
-                {isWaiting ? "Searching..." : "Next"}
-            </button>
-
-            <button
-                onClick={onSkip}
-                disabled={!canInteract || !isMatched}
-                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-            >
-                <SkipForward className="h-3 w-3" />
-                Skip
-            </button>
+            {isIdle ? (
+                <button
+                    onClick={onNext}
+                    disabled={!canInteract}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background transition-all hover:opacity-85 disabled:opacity-40"
+                >
+                    <Shuffle className="h-3.5 w-3.5" />
+                    Next
+                </button>
+            ) : (
+                <button
+                    onClick={onSkip}
+                    disabled={!canInteract}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/50 px-4 py-2 text-xs font-medium text-foreground backdrop-blur-sm transition-all hover:border-foreground/25 disabled:opacity-40"
+                >
+                    {isWaiting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SkipForward className="h-3.5 w-3.5" />}
+                    Skip
+                </button>
+            )}
         </div>
     );
 }

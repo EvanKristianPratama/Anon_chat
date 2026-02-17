@@ -2,6 +2,7 @@ import type { ChatState } from "../chat-state";
 import type { ChatConfig } from "../config";
 import { emit, emitSystemError } from "../protocol";
 import type { EndReason, ImageMime, RoomRecord, UserSession } from "../types";
+import { serializeAvatar } from "../utils";
 
 interface RelayContext {
   room: RoomRecord;
@@ -65,6 +66,7 @@ export class RoomService {
     emit(relay.partner.socket, "chat:text", {
       from: relay.fromUser.userId,
       alias: relay.fromUser.alias,
+      avatar: serializeAvatar(relay.fromUser.avatar),
       text,
       at: Date.now()
     });
@@ -80,6 +82,7 @@ export class RoomService {
     emit(relay.partner.socket, "chat:image", {
       from: relay.fromUser.userId,
       alias: relay.fromUser.alias,
+      avatar: serializeAvatar(relay.fromUser.avatar),
       mime,
       data,
       at: Date.now()

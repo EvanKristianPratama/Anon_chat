@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import { ChatHeader } from "@/components/chat/chat-header";
@@ -8,98 +8,104 @@ import { ChatMessages } from "@/components/chat/chat-messages";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatActions } from "@/components/chat/chat-actions";
 import { DisplayNameModal } from "@/components/chat/display-name-modal";
+import { persistDisplayName } from "@/lib/user-preferences";
+import { buildQueueAvatarPayload, type AvatarPreference } from "@/lib/avatar";
+import type { QueueState } from "@/types/chat";
 
 interface ChatContainerProps {
-    displayName: string;
-    setDisplayName: Dispatch<SetStateAction<string>>;
+  displayName: string;
+  setDisplayName: Dispatch<SetStateAction<string>>;
+  avatarPreference: AvatarPreference;
+  selfAvatarUrl: string;
+  showDisplayNameModal: boolean;
+  setShowDisplayNameModal: Dispatch<SetStateAction<boolean>>;
+  onSessionStateChange?: (state: {
+    queueState: QueueState;
+    partnerAlias: string | null;
+    partnerAvatar: string | null;
+  }) => void;
 }
 
-export function ChatContainer({ displayName, setDisplayName }: ChatContainerProps) {
-    const {
-        connected,
-        queueState,
-        partnerId,
-        partnerAlias,
-        messages,
-        joinQueue,
-        skip,
-        sendText,
-        sendImage,
-    } = useChatSocket();
+export function ChatContainer({
+  displayName,
+  setDisplayName,
+  avatarPreference,
+  selfAvatarUrl,
+  showDisplayNameModal,
+  setShowDisplayNameModal,
+  onSessionStateChange
+}: ChatContainerProps) {
+  const {
+    connected,
+    queueState,
+    partnerId,
+    partnerAlias,
+    partnerAvatar,
+    messages,
+    joinQueue,
+    skip,
+    sendText,
+    sendImage
+  } = useChatSocket();
 
-    const [showDisplayNameModal, setShowDisplayNameModal] = useState(true);
+  const canInteract = connected && !showDisplayNameModal && displayName.length > 0;
 
-    useEffect(() => {
-        const saved =
-            window.localStorage.getItem("anon_display_name") ??
-            window.localStorage.getItem("anon_alias");
+  useEffect(() => {
+    onSessionStateChange?.({ queueState, partnerAlias, partnerAvatar });
+  }, [onSessionStateChange, partnerAlias, partnerAvatar, queueState]);
 
-        if (saved && saved.trim().length > 0) {
-            const normalized = saved.trim().slice(0, 24);
-            setDisplayName(normalized);
-            setShowDisplayNameModal(false);
-        }
-    }, [setDisplayName]);
+  const handleSaveDisplayName = (newDisplayName: string) => {
+    const normalized = persistDisplayName(newDisplayName);
+    setDisplayName(normalized);
+    setShowDisplayNameModal(false);
+  };
 
-    const canInteract = connected && !showDisplayNameModal && displayName.length > 0;
+  const handleNext = () => {
+    if (!displayName) {
+      setShowDisplayNameModal(true);
+      return;
+    }
 
-    const handleSaveDisplayName = (newDisplayName: string) => {
-        setDisplayName(newDisplayName);
-        setShowDisplayNameModal(false);
-        window.localStorage.setItem("anon_display_name", newDisplayName);
-        window.localStorage.setItem("anon_alias", newDisplayName);
-    };
+    joinQueue(displayName, buildQueueAvatarPayload(avatarPreference, displayName));
+  };
 
-    const handleNext = () => {
-        if (!displayName) {
-            setShowDisplayNameModal(true);
-            return;
-        }
-        joinQueue(displayName);
-    };
+  const handleSendText = (text: string) => {
+    if (!canInteract) {
+      return;
+    }
 
-    const handleSendText = (text: string) => {
-        if (!canInteract) return;
-        sendText(text, displayName);
-    };
+    sendText(text, displayName);
+  };
 
-    const handleSendImage = (file: File) => {
-        if (!canInteract) return;
-        void sendImage(file, displayName);
-    };
+  const handleSendImage = (file: File) => {
+    if (!canInteract) {
+      return;
+    }
 
-    return (
-        <div className="flex flex-1 flex-col overflow-hidden">
-            <ChatHeader
-                displayName={displayName}
-                partnerId={partnerId}
-                partnerAlias={partnerAlias}
-                connected={connected}
-                queueState={queueState}
-                onEditDisplayName={() => setShowDisplayNameModal(true)}
-            />
+    void sendImage(file, displayName);
+  };
 
-            <div className="min-h-0 flex-1 overflow-hidden">
-                <ChatMessages messages={messages} displayName={displayName} />
-            </div>
+  return (
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <ChatHeader partnerId={partnerId} partnerAlias={partnerAlias} queueState={queueState} />
 
-            <div className="border-t border-border px-3 py-2 md:px-4 md:py-3">
-                <ChatActions
-                    canInteract={canInteract}
-                    queueState={queueState}
-                    onNext={handleNext}
-                    onSkip={skip}
-                />
-                <ChatInput
-                    disabled={!canInteract}
-                    onSendText={handleSendText}
-                    onSendImage={handleSendImage}
-                />
-            </div>
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <ChatMessages
+          messages={messages}
+          displayName={displayName}
+          selfAvatarUrl={selfAvatarUrl}
+          partnerAvatarUrl={partnerAvatar}
+        />
+      </div>
 
-            {showDisplayNameModal && (
-                <DisplayNameModal initialDisplayName={displayName} onSave={handleSaveDisplayName} />
-            )}
-        </div>
-    );
+      <div className="border-t border-border px-3 py-2 md:px-4 md:py-3">
+        <ChatActions canInteract={canInteract} queueState={queueState} onNext={handleNext} onSkip={skip} />
+        <ChatInput disabled={!canInteract} onSendText={handleSendText} onSendImage={handleSendImage} />
+      </div>
+
+      {showDisplayNameModal && (
+        <DisplayNameModal initialDisplayName={displayName} onSave={handleSaveDisplayName} />
+      )}
+    </div>
+  );
 }

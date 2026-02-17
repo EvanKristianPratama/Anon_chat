@@ -4,6 +4,7 @@ export interface ChatConfig {
   adminToken: string;
   maxMessageLength: number;
   maxImageBytes: number;
+  maxAvatarBytes: number;
   idleTimeoutMs: number;
   maxSessionMs: number;
 }
@@ -22,6 +23,7 @@ export const createChatConfig = (env: Env): ChatConfig => {
     adminToken: env.ADMIN_TOKEN ?? "dev-admin-token",
     maxMessageLength: parseNumber(env.MAX_MESSAGE_LENGTH, 500),
     maxImageBytes: parseNumber(env.MAX_IMAGE_BYTES, 1_000_000),
+    maxAvatarBytes: parseNumber(env.MAX_AVATAR_BYTES, 256_000),
     idleTimeoutMs: parseNumber(env.IDLE_TIMEOUT_SEC, 60) * 1000,
     maxSessionMs: parseNumber(env.MAX_SESSION_SEC, 900) * 1000
   };

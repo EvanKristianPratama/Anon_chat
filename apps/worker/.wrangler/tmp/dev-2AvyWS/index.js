@@ -14,6 +14,7 @@ var createChatConfig = /* @__PURE__ */ __name((env) => {
     adminToken: env.ADMIN_TOKEN ?? "dev-admin-token",
     maxMessageLength: parseNumber(env.MAX_MESSAGE_LENGTH, 500),
     maxImageBytes: parseNumber(env.MAX_IMAGE_BYTES, 1e6),
+    maxAvatarBytes: parseNumber(env.MAX_AVATAR_BYTES, 256e3),
     idleTimeoutMs: parseNumber(env.IDLE_TIMEOUT_SEC, 60) * 1e3,
     maxSessionMs: parseNumber(env.MAX_SESSION_SEC, 900) * 1e3
   };
@@ -107,6 +108,10 @@ var ChatState = class {
   }
 };
 
+// src/types.ts
+var ALLOWED_IMAGE_MIME = /* @__PURE__ */ new Set(["image/jpeg", "image/png", "image/webp"]);
+var ALLOWED_DICEBEAR_STYLE = /* @__PURE__ */ new Set(["avataaars", "open-peeps"]);
+
 // src/utils.ts
 var sanitizeText = /* @__PURE__ */ __name((value) => value.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/javascript:/gi, "").replace(/on\w+\s*=/gi, ""), "sanitizeText");
 var normalizeAlias = /* @__PURE__ */ __name((value) => {
@@ -121,14 +126,84 @@ var base64ByteLength = /* @__PURE__ */ __name((raw) => {
 var isObjectRecord = /* @__PURE__ */ __name((value) => {
   return typeof value === "object" && value !== null;
 }, "isObjectRecord");
+var normalizeAvatarSeed = /* @__PURE__ */ __name((value) => {
+  const cleaned = sanitizeText(value).trim().replace(/\s+/g, " ").replace(/[^a-zA-Z0-9 _-]/g, "").slice(0, 32);
+  return cleaned.length > 0 ? cleaned : "anonymous";
+}, "normalizeAvatarSeed");
+var isLikelyBase64 = /* @__PURE__ */ __name((value) => /^[A-Za-z0-9+/=]+$/.test(value), "isLikelyBase64");
+var normalizeAvatarPayload = /* @__PURE__ */ __name((payload, maxAvatarBytes, fallbackSeed) => {
+  if (payload.type === "dicebear") {
+    const style = ALLOWED_DICEBEAR_STYLE.has(payload.style) ? payload.style : "avataaars";
+    const seed = normalizeAvatarSeed(
+      typeof payload.seed === "string" ? payload.seed : fallbackSeed
+    );
+    return {
+      type: "dicebear",
+      style,
+      seed
+    };
+  }
+  const mime = payload.mime;
+  const data = payload.data;
+  if (!mime || !ALLOWED_IMAGE_MIME.has(mime)) {
+    return null;
+  }
+  if (!data || !isLikelyBase64(data)) {
+    return null;
+  }
+  if (base64ByteLength(data) > maxAvatarBytes) {
+    return null;
+  }
+  return {
+    type: "custom",
+    mime,
+    data
+  };
+}, "normalizeAvatarPayload");
+var buildDicebearAvatarUrl = /* @__PURE__ */ __name((style, seed) => {
+  const params = new URLSearchParams({
+    seed: normalizeAvatarSeed(seed),
+    backgroundType: "gradientLinear",
+    radius: "50"
+  });
+  return `https://api.dicebear.com/9.x/${style}/svg?${params.toString()}`;
+}, "buildDicebearAvatarUrl");
+var serializeAvatar = /* @__PURE__ */ __name((avatar) => {
+  if (!avatar) {
+    return void 0;
+  }
+  if (avatar.type === "custom") {
+    return `data:${avatar.mime};base64,${avatar.data}`;
+  }
+  return buildDicebearAvatarUrl(avatar.style, avatar.seed);
+}, "serializeAvatar");
 
 // src/payload-parsers.ts
+var isQueueJoinAvatarPayload = /* @__PURE__ */ __name((value) => {
+  if (!isObjectRecord(value) || typeof value.type !== "string") {
+    return false;
+  }
+  if (value.type === "dicebear") {
+    const hasValidStyle = value.style === void 0 || typeof value.style === "string";
+    const hasValidSeed = value.seed === void 0 || typeof value.seed === "string";
+    return hasValidStyle && hasValidSeed;
+  }
+  if (value.type === "custom") {
+    return typeof value.mime === "string" && typeof value.data === "string";
+  }
+  return false;
+}, "isQueueJoinAvatarPayload");
 var parseQueueJoinPayload = /* @__PURE__ */ __name((rawPayload) => {
   if (!isObjectRecord(rawPayload)) {
     return null;
   }
   if ("alias" in rawPayload && typeof rawPayload.alias !== "string") {
     return null;
+  }
+  if ("avatar" in rawPayload && rawPayload.avatar !== void 0) {
+    if (!isQueueJoinAvatarPayload(rawPayload.avatar)) {
+      return null;
+    }
   }
   return rawPayload;
 }, "parseQueueJoinPayload");
@@ -409,6 +484,7 @@ var RoomService = class {
     emit(relay.partner.socket, "chat:text", {
       from: relay.fromUser.userId,
       alias: relay.fromUser.alias,
+      avatar: serializeAvatar(relay.fromUser.avatar),
       text,
       at: Date.now()
     });
@@ -422,6 +498,7 @@ var RoomService = class {
     emit(relay.partner.socket, "chat:image", {
       from: relay.fromUser.userId,
       alias: relay.fromUser.alias,
+      avatar: serializeAvatar(relay.fromUser.avatar),
       mime,
       data,
       at: Date.now()
@@ -506,9 +583,6 @@ var RoomService = class {
     return room.userA === userId ? room.userB : room.userA;
   }
 };
-
-// src/types.ts
-var ALLOWED_IMAGE_MIME = /* @__PURE__ */ new Set(["image/jpeg", "image/png", "image/webp"]);
 
 // src/chat-durable-object.ts
 var ChatDurableObject = class {
@@ -625,11 +699,41 @@ var ChatDurableObject = class {
       return;
     }
     const payload = parseQueueJoinPayload(rawPayload);
+    if (!payload) {
+      emitSystemError(user.socket, "BAD_REQUEST", "Invalid queue payload.");
+      return;
+    }
     if (payload?.alias) {
       const alias = normalizeAlias(payload.alias);
       if (alias) {
         user.alias = alias;
       }
+    }
+    if (payload.avatar) {
+      const normalizedAvatar = normalizeAvatarPayload(
+        payload.avatar,
+        this.config.maxAvatarBytes,
+        user.alias ?? user.userId
+      );
+      if (!normalizedAvatar) {
+        emitSystemError(
+          user.socket,
+          "INVALID_AVATAR",
+          `Invalid avatar payload. Max ${this.config.maxAvatarBytes} bytes (jpeg/png/webp).`
+        );
+        return;
+      }
+      user.avatar = normalizedAvatar;
+    } else if (!user.avatar) {
+      user.avatar = normalizeAvatarPayload(
+        {
+          type: "dicebear",
+          style: "avataaars",
+          seed: user.alias ?? user.userId
+        },
+        this.config.maxAvatarBytes,
+        user.alias ?? user.userId
+      ) ?? void 0;
     }
     const matched = this.enqueueAndMatch(user);
     if (matched) {
@@ -720,12 +824,14 @@ var ChatDurableObject = class {
       emit(match.first.socket, "room:matched", {
         roomId: match.room.roomId,
         partnerId: match.second.userId,
-        partnerAlias: match.second.alias
+        partnerAlias: match.second.alias,
+        partnerAvatar: serializeAvatar(match.second.avatar)
       });
       emit(match.second.socket, "room:matched", {
         roomId: match.room.roomId,
         partnerId: match.first.userId,
-        partnerAlias: match.first.alias
+        partnerAlias: match.first.alias,
+        partnerAvatar: serializeAvatar(match.first.avatar)
       });
     }
     return true;
@@ -790,7 +896,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-kCViii/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-eSwArM/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -822,7 +928,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-kCViii/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-eSwArM/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

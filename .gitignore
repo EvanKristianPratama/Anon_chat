@@ -2,6 +2,7 @@ node_modules
 .next
 dist
 .env
+.dev.vars
 .DS_Store
 coverage
 *.tsbuildinfo

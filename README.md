@@ -9,6 +9,7 @@ TypeScript full-stack starter for anonymous random chat with no message persiste
 - In-memory state: Redis
 - Worker: BullMQ
 - Infra starter: Docker compose (Redis)
+- Edge realtime option: Cloudflare Workers + Durable Objects (no Redis required)
 
 ## Implemented Features
 
@@ -24,6 +25,7 @@ TypeScript full-stack starter for anonymous random chat with no message persiste
 ## Project Structure
 
 - `apps/server`: NestJS websocket API + workers
+- `apps/worker`: Cloudflare Worker + Durable Object realtime backend
 - `apps/web`: Next.js UI for user chat + admin monitor
 - `packages/contracts`: shared event contracts
 - `packages/state-machine`: shared finite state reducer
@@ -58,6 +60,35 @@ npm run dev:server
 npm run dev:web
 ```
 
+## Cloudflare Worker Mode (No Card Friendly)
+
+1. Authenticate wrangler
+
+```bash
+cd apps/worker
+npx wrangler login
+npx wrangler whoami
+```
+
+2. Create local worker vars
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+3. Run worker locally and web app
+
+```bash
+cd /Users/mac/Desktop/anon_cb/apps/worker && npm run dev
+cd /Users/mac/Desktop/anon_cb && npm run dev:web
+```
+
+4. Set frontend websocket env
+
+```bash
+NEXT_PUBLIC_WS_URL=http://localhost:8787
+```
+
 ## Security Guardrails Included
 
 - Rate limit by IP (queue/text/image/skip)
@@ -72,4 +103,5 @@ npm run dev:web
 - This starter is intentionally KISS and keeps a single source of truth in Redis.
 - If you scale to multi-instance websocket servers, add Socket.IO Redis adapter.
 - Deployment runbook for Vercel + Render + Upstash: `/Users/mac/Desktop/anon_cb/docs/deploy-render-vercel.md`.
+- Deployment runbook for Vercel + Cloudflare Workers: `/Users/mac/Desktop/anon_cb/docs/deploy-cloudflare-workers-vercel.md`.
 # Anon_chat

@@ -8,6 +8,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "dev:server": "npm run dev --workspace @anon/server",
+    "dev:worker": "npm run dev --workspace @anon/worker",
     "dev:web": "npm run dev --workspace @anon/web",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },

@@ -1,0 +1,10 @@
+{
+  "name": "@anon/worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "whoami": "npx wrangler whoami"
+  }
+}

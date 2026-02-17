@@ -4,7 +4,7 @@ import { Activity, Gauge, SignalHigh, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { AdminMetrics } from "@anon/contracts";
-import { createSocket, type AppSocket } from "@/lib/socket";
+import { parseWsEnvelope, sendWsEvent, toWebSocketUrl } from "@/lib/ws";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,10 +17,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:4000";
+const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:8787";
+const adminSocketUrl = toWebSocketUrl(wsBaseUrl, "/admin/ws");
 
 export function AdminDashboard() {
-  const socketRef = useRef<AppSocket | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
 
   const [adminToken, setAdminToken] = useState("");
   const [connected, setConnected] = useState(false);
@@ -30,7 +31,7 @@ export function AdminDashboard() {
   useEffect(() => {
     return () => {
       if (socketRef.current) {
-        socketRef.current.disconnect();
+        socketRef.current.close();
         socketRef.current = null;
       }
     };
@@ -38,7 +39,7 @@ export function AdminDashboard() {
 
   const connectAdmin = (): void => {
     if (socketRef.current) {
-      socketRef.current.disconnect();
+      socketRef.current.close();
       socketRef.current = null;
     }
 
@@ -46,27 +47,38 @@ export function AdminDashboard() {
     setError(null);
     setMetrics(null);
 
-    const socket = createSocket(wsUrl, "/admin");
+    const socket = new WebSocket(adminSocketUrl);
     socketRef.current = socket;
 
-    socket.on("connect", () => {
+    const onOpen = () => {
       setConnected(true);
-      socket.emit("admin:subscribe", { token: adminToken });
-    });
+      sendWsEvent(socket, "admin:subscribe", { token: adminToken });
+    };
 
-    socket.on("disconnect", () => {
+    const onClose = () => {
       setConnected(false);
-    });
+    };
 
-    socket.on("admin:metrics", (payload: AdminMetrics) => {
-      setMetrics(payload);
-    });
+    const onMessage = (event: MessageEvent) => {
+      const envelope = parseWsEnvelope(event.data);
+      if (!envelope) {
+        return;
+      }
 
-    socket.on("system:error", ({ code, message }) => {
-      setError(`${code}: ${message}`);
-    });
+      if (envelope.event === "admin:metrics") {
+        setMetrics(envelope.payload as AdminMetrics);
+        return;
+      }
 
-    socket.connect();
+      if (envelope.event === "system:error") {
+        const payload = envelope.payload as { code: string; message: string };
+        setError(`${payload.code}: ${payload.message}`);
+      }
+    };
+
+    socket.addEventListener("open", onOpen);
+    socket.addEventListener("close", onClose);
+    socket.addEventListener("message", onMessage);
   };
 
   return (
@@ -82,14 +94,14 @@ export function AdminDashboard() {
               <SignalHigh className="h-5 w-5" />
               Live Feed
             </CardTitle>
-            <CardDescription className="font-mono text-xs">websocket: {wsUrl}</CardDescription>
+            <CardDescription className="font-mono text-xs">websocket: {adminSocketUrl}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={connected ? "default" : "outline"}>
                 {connected ? "connected" : "disconnected"}
               </Badge>
-              <Badge variant="secondary">namespace: /admin</Badge>
+              <Badge variant="secondary">role: admin</Badge>
             </div>
 
             <div className="flex flex-wrap gap-2">
